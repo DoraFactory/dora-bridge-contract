@@ -44,6 +44,8 @@ contract DoraBridge {
         uint256 amount
     );
 
+    event Process(bytes32 indexed txHash, uint256 count, uint256 processed);
+
     function changeAdmin(address _admin) public {
         require(msg.sender == admin);
         admin = _admin;
@@ -124,5 +126,7 @@ contract DoraBridge {
         }
 
         processedRecords = newProcessedRecords;
+
+        emit Process(_txHash, _count, newProcessedRecords);
     }
 }
