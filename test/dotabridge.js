@@ -75,18 +75,20 @@ contract("DoraBridge", (accounts) => {
       "User allowance error"
     );
 
-    await doraBridgeInstance.submit(toWei(40), votaAddr, {
+    const randAmount = Math.round(Math.random() * 80 + 10);
+
+    await doraBridgeInstance.submit(toWei(randAmount), votaAddr, {
       from: user,
     });
 
     assert.equal(
       (await tokenInstance.balanceOf.call(user)).toString(),
-      toWei(60),
+      toWei(100 - randAmount),
       "User finnal balance error"
     );
     assert.equal(
       (await tokenInstance.balanceOf.call(zeroAddr)).toString(),
-      toWei(140),
+      toWei(100 + randAmount),
       "Zero address finnal balance error"
     );
 
@@ -104,7 +106,7 @@ contract("DoraBridge", (accounts) => {
 
     assert.sameMembers(
       await doraBridgeInstance.record.call("0"),
-      [toWei(40), votaAddr, zeroHash],
+      [toWei(randAmount), votaAddr, zeroHash],
       "User record error"
     );
 
@@ -112,7 +114,7 @@ contract("DoraBridge", (accounts) => {
     assert.lengthOf(recordList, 1, "User record list length error");
     assert.sameMembers(
       recordList[0],
-      [toWei(40), votaAddr, zeroHash],
+      [toWei(randAmount), votaAddr, zeroHash],
       "User record list error"
     );
   });
