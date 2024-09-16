@@ -2,19 +2,15 @@
 pragma solidity ^0.8.13;
 
 interface ERC20 {
-    function decimals() external view returns (uint256);
-
     function transferFrom(address, address, uint256) external returns (bool);
-
-    function transfer(address, uint256) external returns (bool);
 }
 
 contract DoraBridge {
-    ERC20 public token;
+    ERC20 public immutable token;
 
     address public admin;
 
-    uint256 public amountThreshold = 0.1 ether;
+    uint256 public constant amountThreshold = 0.1 ether;
 
     struct Record {
         uint256 amount;
@@ -34,6 +30,7 @@ contract DoraBridge {
     uint256 public processedRecords;
 
     bytes32[] private _txHashes;
+    mapping(bytes32 => bool) private _txHashesMap;
 
     mapping(address => uint256[]) private _usersRecords;
 
@@ -46,7 +43,7 @@ contract DoraBridge {
 
     event Process(bytes32 indexed txHash, uint256 count, uint256 processed);
 
-    function changeAdmin(address _admin) public {
+    function changeAdmin(address _admin) external {
         require(msg.sender == admin);
         admin = _admin;
     }
@@ -65,7 +62,7 @@ contract DoraBridge {
 
     function recordOf(
         address _user
-    ) public view returns (Record[] memory results) {
+    ) external view returns (Record[] memory results) {
         uint256[] storage list = _usersRecords[_user];
         uint256 size = list.length;
 
@@ -77,7 +74,7 @@ contract DoraBridge {
 
     function getUnprocessedRecords(
         uint256 _count
-    ) public view returns (uint256 size, Record[] memory records) {
+    ) external view returns (uint256 size, Record[] memory records) {
         size = totalRecords - processedRecords;
         if (size > _count) {
             size = _count;
@@ -92,7 +89,7 @@ contract DoraBridge {
         }
     }
 
-    function submit(uint256 _amount, address _votaAddr) public {
+    function submit(uint256 _amount, address _votaAddr) external {
         require(_amount >= amountThreshold, "amount too low");
 
         require(
@@ -111,10 +108,13 @@ contract DoraBridge {
         emit Submit(idx, msg.sender, _votaAddr, _amount);
     }
 
-    function process(bytes32 _txHash, uint256 _count) public {
+    function process(bytes32 _txHash, uint256 _count) external {
         require(msg.sender == admin);
         require(_count > 0);
         require(processedRecords + _count <= totalRecords);
+        require(!_txHashesMap[_txHash]);
+
+        _txHashesMap[_txHash] = true;
 
         _txHashes.push(_txHash);
         uint256 txHashIdx = _txHashes.length;
